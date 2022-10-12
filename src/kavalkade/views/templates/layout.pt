@@ -1,0 +1,10 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Yo</title>
+    </head>
+    <body>
+    <h1>Un titre</h1>
+    <div class="col-md-12" tal:content="structure content">body</div>
+    </body>
+</html>
