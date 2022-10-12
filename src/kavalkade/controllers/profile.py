@@ -1,11 +1,12 @@
 import colander
 import deform
-import re
-from knappe.meta import HTTPMethodEndpointMeta
+from knappe.response import Response
+from knappe.routing import Router
 from knappe_deform import FormPage, trigger
+import re
 
 def discord_handle(node, value):
-    if type(value) is not str or not re.match(r'([.]+)#([0-9]{4})', value):
+    if type(value) is not str or not re.match(r'(.+)#([0-9]{4})', value):
         raise colander.Invalid('Value is not a Discord handle')
 
 class ProfileSchema(colander.Schema):
@@ -26,6 +27,12 @@ class Profile(FormPage):
 
     @trigger('save', title="Sauvegarder")
     def save(self, request):
-        form = self.get_form(request)
-        appstruct = form.validate(request.data.form)
-        return Response.redirect('/profile')
+        try:
+            form = self.get_form(request)
+            appstruct = form.validate(request.data.form)
+            return Response.redirect('/profile')
+        except deform.exception.ValidationFailure as exception:
+            return {
+                "error" : None,
+                "rendered_form": exception.render()
+            }
