@@ -1,0 +1,21 @@
+{
+    "owner" : "ID du joueur, ou le MJ si c'est un PNJ",
+    "game" : "ID du jeu",
+    "name" : "Nom du personnage",
+    "portrait" : "Trogne du bonhomme",
+    "stats" : {
+        "__doc" : "Dict de stats issu du moteur du jeu"
+    }, 
+    "inventory" : {
+        "__doc" : "Format et limitations issus du moteur du jeu"
+    },
+    "actions" : {
+        "__doc" : "Liste dédiée au personnage, en plus des actions de base du moteur du jeu, exemple : sorts, compétences particulières"
+    },
+    "notes" : [
+        {
+            "name" : "Nom de la note du MJ",
+            "content" : "Contenu de la note du MJ"
+        }
+    ]
+}

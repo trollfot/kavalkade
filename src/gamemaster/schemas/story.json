@@ -1,0 +1,13 @@
+{
+    "owner" : "ID du MJ",
+    "game" : "ID du jeu",
+    "name" : "Nom du scénario / campagne",
+    "assets" : [
+        {
+            "name" : "nom de l'asset",
+            "type" : "PNJ, image, son, vidéo, texte, etc.",
+            "path" : "chemin de l'asset"
+        }
+    ],
+    "notes" : "Notes du MJ"
+}
