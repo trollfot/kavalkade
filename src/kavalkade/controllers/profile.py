@@ -1,7 +1,7 @@
 import colander
 import deform
+import re
 from knappe.meta import HTTPMethodEndpointMeta
-from knappe.decorators import html
 from knappe_deform import FormPage, trigger
 
 def discord_handle(node, value):
@@ -29,9 +29,3 @@ class Profile(FormPage):
         form = self.get_form(request)
         appstruct = form.validate(request.data.form)
         return Response.redirect('/profile')
-
-
-    @html('profile')
-    def GET(self, request):
-        return {}
-    
