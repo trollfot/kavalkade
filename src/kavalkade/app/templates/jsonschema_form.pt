@@ -8,10 +8,20 @@
 
   const element = document.getElementById('editor_holder');
   const button = document.getElementById('send');
-  const editor = new JSONEditor(element, {
+  const initial_data = '${initial_data}';
+  const options = {
       schema: JSON.parse('${schema}'),
-      theme: 'bootstrap4'
-  });
+      theme: 'bootstrap4',
+      show_opt_in: false,
+      no_additional_properties: true,
+      disable_properties: true,
+      disable_edit_json: true,
+      display_required_only: false
+  }
+  if (initial_data) {
+      options.startval = JSON.parse(initial_data);
+  }
+  const editor = new JSONEditor(element, options);
 
   function send_data() {
 

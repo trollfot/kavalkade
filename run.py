@@ -1,17 +1,25 @@
+import logging
+import contextlib
 from minicli import cli, run
 
 
-def create_app():
+@contextlib.contextmanager
+def temporary_app():
     from kavalkade.app import Kavalkade
     from kavalkade import controllers, models
+    from tinydb import TinyDB
 
-    return Kavalkade(models=models.models, router=controllers.router)
+    db = TinyDB('test.json')
+    try:
+        yield Kavalkade(db, models=models.models, router=controllers.router)
+    finally:
+        logging.warning('Cleaning DB entirely.')
+        db.drop_tables()
 
 
 @cli
 def http(debug: bool = False):
     import sys
-    import logging
     import bjoern
 
     log_level = logging.DEBUG if debug else logging.WARNING
@@ -22,9 +30,9 @@ def http(debug: bool = False):
         format='%(asctime)s %(levelname)s %(module)s %(funcName)s %(message)s',
         handlers=[stream_handler]
     )
-    app = create_app()
-    logging.info('Server starts.')
-    bjoern.run(app, "127.0.0.1", 8000)
+    with temporary_app() as app:
+        logging.info(f'Server starts with {app}.')
+        bjoern.run(app, "127.0.0.1", 8000)
 
 
 if __name__ == '__main__':

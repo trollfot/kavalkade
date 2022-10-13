@@ -12,6 +12,7 @@ setup(
         'knappe_deform',
         'orjson',
         'pydantic',
+        'tinydb',
     ],
     extras_require={
         'test': [

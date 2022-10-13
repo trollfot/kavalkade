@@ -1,5 +1,6 @@
 import typing as t
 from dataclasses import dataclass, field
+from tinydb import TinyDB
 from horseman.mapping import RootNode
 from knappe.blueprint import Blueprint
 from knappe.pipeline import Pipeline
@@ -13,7 +14,7 @@ from .models import Models
 
 @dataclass
 class Kavalkade(RootNode):
-
+    database: TinyDB
     models: Models = field(default_factory=Models)
     router: Router = field(default_factory=Router)
     middlewares: t.Iterable[Middleware] = field(default_factory=tuple)

@@ -37,6 +37,10 @@ class Note(BaseModel):
 
 @models.register('character', addable=True)
 class Character(BaseModel):
+
+    class Config:
+        underscore_attrs_are_private = True
+
     owner: str
     game: str
     name: str
@@ -45,6 +49,7 @@ class Character(BaseModel):
     inventory: t.List[Item] = []
     actions: t.List[Action] = []
     notes: t.List[Note] = []
+    _doc_id: t.Optional[int] = Field(alias="doc_id", default=None)
 
 
 __all__ = ('Action', 'Item', 'Note', 'Character')
