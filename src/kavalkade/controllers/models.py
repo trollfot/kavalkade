@@ -32,4 +32,5 @@ def model_form(request, model):
 @json
 @context(get_model)
 def model_save(request, model):
-    print(request.data.json)
+    instance = model.model(**request.data.json)
+    print(repr(instance))
