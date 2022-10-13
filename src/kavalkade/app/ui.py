@@ -1,6 +1,7 @@
 import pathlib
 from chameleon.zpt.loader import TemplateLoader
-from knappe.ui import SlotExpr, UI, Layout 
+from knappe.ui import SlotExpr, UI, Layout
+
 
 ui = UI(
     templates = TemplateLoader(

@@ -1,8 +1,6 @@
 -e git+https://git@github.com/HorsemanWSGI/horseman.git@1.0#egg=horseman
 -e git+https://git@github.com/HorsemanWSGI/knappe.git#egg=knappe
 -e git+https://git@github.com/HorsemanWSGI/knappe_deform.git#egg=knappe_deform
-colander
-deform
-knappe_deform
-discord.py[voice]
+-e .[test]
 bjoern
+minicli

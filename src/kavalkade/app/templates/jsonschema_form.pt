@@ -1,0 +1,34 @@
+<script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
+
+
+<div id="editor_holder" />
+<button id="send">Send form</button>
+
+
+<script>
+
+  const element = document.getElementById('editor_holder');
+  const button = document.getElementById('send');
+  const editor = new JSONEditor(element, {
+      schema: JSON.parse('${schema}'),
+      theme: 'bootstrap4'
+  });
+
+  function send_data() {
+      editor.validate();
+      xmlhttp = new XMLHttpRequest();
+      var url = "${action}";
+      xmlhttp.open("POST", url, true);
+      xmlhttp.onreadystatechange = function () {
+          if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+              alert(xmlhttp.responseText);
+          }
+      };
+      xmlhttp.setRequestHeader("Content-type", "application/json");
+      xmlhttp.send(JSON.stringify(editor.getValue()));
+  }
+
+  editor.on('ready', () => {
+      button.addEventListener("click", send_data);
+  });
+</script>

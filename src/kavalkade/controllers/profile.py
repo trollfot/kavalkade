@@ -1,13 +1,15 @@
+import re
 import colander
 import deform
 from knappe.response import Response
-from knappe.routing import Router
 from knappe_deform import FormPage, trigger
-import re
+from kavalkade.controllers import router
+
 
 def discord_handle(node, value):
     if type(value) is not str or not re.match(r'(.+)#([0-9]{4})', value):
         raise colander.Invalid('Value is not a Discord handle')
+
 
 class ProfileSchema(colander.Schema):
     username = colander.SchemaNode(
@@ -21,6 +23,8 @@ class ProfileSchema(colander.Schema):
         validator=discord_handle
     )
 
+
+@router.register('/profile')
 class Profile(FormPage):
 
     schema = ProfileSchema
