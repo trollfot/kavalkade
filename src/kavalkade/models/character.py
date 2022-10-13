@@ -9,7 +9,7 @@ class PossibleStat(str, Enum):
     dex = 'dexterity'
 
 
-@models.register('action')
+@models.register('stat')
 class Stat(BaseModel):
     """Character stat."""
     name: PossibleStat
