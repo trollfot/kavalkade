@@ -1,6 +1,19 @@
+from enum import Enum
 import typing as t
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from kavalkade.models import models
+
+
+class PossibleStat(str, Enum):
+    str = 'strength'
+    dex = 'dexterity'
+
+
+@models.register('action')
+class Stat(BaseModel):
+    """Character stat."""
+    name: PossibleStat
+    value: int = Field(..., gt=0, le=20)
 
 
 @models.register('action')
@@ -28,7 +41,7 @@ class Character(BaseModel):
     game: str
     name: str
     portrait: t.Optional[bytes]
-    stats: t.Dict[str, t.Union[str, int]] = {}
+    stats: t.List[Stat] = []
     inventory: t.List[Item] = []
     actions: t.List[Action] = []
     notes: t.List[Note] = []
