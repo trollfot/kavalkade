@@ -35,6 +35,7 @@ class ModelInfo(t.NamedTuple):
     name: str
     model: Model
     schema: JSONSchema
+    metadata: dict
 
 
 class Models(t.Iterable[ModelInfo]):
@@ -60,7 +61,7 @@ class Models(t.Iterable[ModelInfo]):
     def remove(self, name: str):
         del self._models[name]
 
-    def add(self, name: str, model: Model) -> ModelInfo:
+    def add(self, name: str, model: Model, **metadata) -> ModelInfo:
         if name in self._models:
             logger.debug(
                 f'Model {name!r} already exists. '
@@ -70,15 +71,16 @@ class Models(t.Iterable[ModelInfo]):
         info = ModelInfo(
             name=name,
             model=model,
-            schema=JSONSchema(model.schema_json())
+            schema=JSONSchema(model.schema_json()),
+            metadata=metadata
         )
         self._models[name] = info
         logger.info(f'Added new model {model!r} as {name!r}.')
         return info
 
-    def register(self, name: str):
+    def register(self, name: str, **metadata):
         def model_registration(model: Model):
-            self.add(name, model)
+            self.add(name, model, **metadata)
             return model
         return model_registration
 

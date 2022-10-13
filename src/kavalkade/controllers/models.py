@@ -7,6 +7,8 @@ def get_model(request):
     model = request.app.models.get(request.params["model"])
     if model is None:
         raise HTTPError(404)
+    if not model.metadata.get('addable', False):
+        raise HTTPError(403)
     return model
 
 

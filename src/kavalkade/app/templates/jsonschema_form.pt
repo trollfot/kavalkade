@@ -1,6 +1,5 @@
 <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
 
-
 <div id="editor_holder" />
 <button id="send">Send form</button>
 
@@ -15,7 +14,13 @@
   });
 
   function send_data() {
-      editor.validate();
+
+      const errors = editor.validate();
+      if (errors.length) {
+          console.log(errors);
+          return null;
+      }
+
       xmlhttp = new XMLHttpRequest();
       var url = "${action}";
       xmlhttp.open("POST", url, true);

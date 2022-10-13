@@ -35,7 +35,7 @@ class Note(BaseModel):
     content: str
 
 
-@models.register('character')
+@models.register('character', addable=True)
 class Character(BaseModel):
     owner: str
     game: str
