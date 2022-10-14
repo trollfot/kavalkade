@@ -1,0 +1,49 @@
+<script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
+
+<div id="editor_holder" />
+<button id="send">Send form</button>
+
+
+<script>
+
+  const element = document.getElementById('editor_holder');
+  const button = document.getElementById('send');
+  const initial_data = '${initial_data}';
+  const options = {
+      schema: JSON.parse('${schema}'),
+      theme: 'bootstrap4',
+      show_opt_in: false,
+      no_additional_properties: true,
+      disable_properties: true,
+      disable_edit_json: true,
+      display_required_only: false
+  }
+  if (initial_data) {
+      options.startval = JSON.parse(initial_data);
+  }
+  const editor = new JSONEditor(element, options);
+
+  function send_data() {
+
+      const errors = editor.validate();
+      if (errors.length) {
+          console.log(errors);
+          return null;
+      }
+
+      xmlhttp = new XMLHttpRequest();
+      var url = "${action}";
+      xmlhttp.open("POST", url, true);
+      xmlhttp.onreadystatechange = function () {
+          if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+              alert(xmlhttp.responseText);
+          }
+      };
+      xmlhttp.setRequestHeader("Content-type", "application/json");
+      xmlhttp.send(JSON.stringify(editor.getValue()));
+  }
+
+  editor.on('ready', () => {
+      button.addEventListener("click", send_data);
+  });
+</script>

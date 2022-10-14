@@ -1,0 +1,24 @@
+<article id="characters">
+  <h2>Characters</h2>
+  <div tal:switch="len(characters)">
+    <ul tal:case="True">
+      <li tal:repeat="char characters">
+        <dl>
+          <dt>${char}</dt>
+          <dd>
+            <a href="/character/${char._doc_id}/edit">edit</a>
+          </dd>
+          <dd>
+            <a href="/character/${char._doc_id}">view</a>
+          </dd>
+        </dl>
+      </li>
+    </ul>
+    <div tal:case="False">
+      <strong><i>No characters</i></strong>
+      <p>
+        <a href="/characters/new">Add one</a>
+      </p>
+    </div>
+  </div>
+</article>
