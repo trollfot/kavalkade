@@ -16,8 +16,7 @@ def gamemaster_chat(ws):
 
 
 def clock_every_6_sec(queue):
-    t = currentThread()
-    while getattr(t, "do_run", True):
+    while True:
         if participants:  # only if there's someone to listen.
             now = datetime.now()
             queue.put(f"It's {now.strftime('%H:%M:%S')}")
