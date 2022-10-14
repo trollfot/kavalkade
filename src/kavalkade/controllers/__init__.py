@@ -3,4 +3,4 @@ from knappe.routing import Router
 router = Router()
 
 
-from . import profile, models, index, character
+from . import profile, models, index, character, gamemaster

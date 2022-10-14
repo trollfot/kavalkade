@@ -7,6 +7,7 @@ setup(
         'colander',
         'deform',
         'discord.py[voice]',
+        'eventlet',
         'horseman',
         'knappe',
         'knappe_deform',

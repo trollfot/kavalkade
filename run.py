@@ -1,26 +1,24 @@
 import logging
-import contextlib
+from horseman.mapping import Mapping
 from minicli import cli, run
 
 
-@contextlib.contextmanager
-def temporary_app():
+def create_web_app():
     from kavalkade.app import Kavalkade
     from kavalkade import controllers, models
+    from tinydb.storages import MemoryStorage
     from tinydb import TinyDB
 
-    db = TinyDB('test.json')
-    try:
-        yield Kavalkade(db, models=models.models, router=controllers.router)
-    finally:
-        logging.warning('Cleaning DB entirely.')
-        db.drop_tables()
+    db = TinyDB(storage=MemoryStorage)
+    return Kavalkade(db, models=models.models, router=controllers.router)
 
 
 @cli
 def http(debug: bool = False):
     import sys
-    import bjoern
+    from eventlet import wsgi
+    from kavalkade.controllers.gamemaster import chat
+    import eventlet
 
     log_level = logging.DEBUG if debug else logging.WARNING
     stream_handler = logging.StreamHandler(stream=sys.stdout)
@@ -30,9 +28,17 @@ def http(debug: bool = False):
         format='%(asctime)s %(levelname)s %(module)s %(funcName)s %(message)s',
         handlers=[stream_handler]
     )
-    with temporary_app() as app:
-        logging.info(f'Server starts with {app}.')
-        bjoern.run(app, "127.0.0.1", 8000)
+
+    root = Mapping({
+        '/': create_web_app(),
+        '/chat': chat
+    })
+
+    wsgi.server(
+        eventlet.listen(('', 8000)),
+        root,
+        log=logging.getLogger('server')
+    )
 
 
 if __name__ == '__main__':
