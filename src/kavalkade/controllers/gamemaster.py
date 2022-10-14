@@ -5,7 +5,7 @@ from datetime import datetime
 from threading import Thread, currentThread
 from eventlet import websocket, green, queue, sleep, GreenPool, spawn
 from kavalkade.controllers import router
-from kavalkade.utils import inotify_watcher
+from kavalkade.utils import INotifyWatcher
 from knappe.decorators import html
 
 
@@ -22,18 +22,16 @@ def get_events():
     return 'toto'
 
 
-def check_folder(path):
-    with inotify_watcher(path) as get_events:
-        while True:
-            events = get_events()
-            if participants:
-                for event in events:
-                    parts = [event.get_mask_description()]
-                    if event.name:
-                        parts.append(event.name)
-                    msg = ' '.join(parts)
-                    for participant in participants:
-                        participant.send(f"File event: {msg}")
+def check_folder(*paths):
+    events = INotifyWatcher(*paths).watch()
+    while event := next(events):
+        if participants:
+            parts = [event.path, event.get_mask_description()]
+            if event.name:
+                parts.append(event.name)
+            msg = ' '.join(parts)
+            for participant in participants:
+                participant.send(f"File event: {msg}")
 
 
 def clock_every_6_sec(queue):
