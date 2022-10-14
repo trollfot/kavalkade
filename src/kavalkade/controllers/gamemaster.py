@@ -1,15 +1,12 @@
-import select
-from time import sleep
 from datetime import datetime
 from threading import Thread, currentThread
-from multiprocessing import Queue
-from eventlet import websocket
+from eventlet import websocket, green, queue, sleep, GreenPool, spawn
 from kavalkade.controllers import router
 from knappe.decorators import html
 
 
 participants = set()
-
+clocker = None
 
 
 @router.register('/talk')
@@ -18,38 +15,46 @@ def gamemaster_chat(ws):
     return {}
 
 
-def clock_eveyt_6_sec(queue):
+def clock_every_6_sec(queue):
     t = currentThread()
     while getattr(t, "do_run", True):
-        now = datetime.now()
-        queue.put(f"It's {now.strftime('%H:%M:%S')}")
-        sleep(6)
+        if participants:  # only if there's someone to listen.
+            now = datetime.now()
+            queue.put(f"It's {now.strftime('%H:%M:%S')}")
+            sleep(6)
+
+
+incoming_events = queue.Queue()
+
+
+def read_ws(ws):
+    while True:
+        m = ws.wait()
+        if m is None:
+            break
+        for p in participants:
+            p.send(m)
+
+
+def read_events(queue):
+    while True:
+        m = incoming_events.get()
+        for p in participants:
+            p.send(m)
 
 
 @websocket.WebSocketWSGI
 def chat(ws):
-    incoming_events = Queue()
-    worker = Thread(target=clock_eveyt_6_sec, args=(incoming_events,))
-    worker.start()
+    global clocker
+    if clocker is None:
+        clocker = spawn(clock_every_6_sec, incoming_events)
     participants.add(ws)
-    poller = select.poll()
-    poller.register(ws.socket, select.POLLIN)
-    poller.register(incoming_events._reader, select.POLLIN)
     try:
-        while True:
-            fdVsEvent = poller.poll(10000)
-            for descriptor, Event in fdVsEvent:
-                if ws.socket.fileno() is descriptor:
-                    m = ws.wait()
-                    if m is None:
-                        break
-                    for p in participants:
-                        p.send(m)
-                else:
-                    m = incoming_events.get()
-                    for p in participants:
-                        p.send(m)
+        pool = GreenPool()
+        ws_reader = pool.spawn(read_ws, ws)
+        iq_reader = pool.spawn(read_events, incoming_events)
+        ws_reader.wait()
     finally:
+        ws_reader.kill()
+        iq_reader.kill()
         participants.remove(ws)
-        worker.do_run = False
-        worker.join()
