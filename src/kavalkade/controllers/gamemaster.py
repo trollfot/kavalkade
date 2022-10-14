@@ -1,18 +1,39 @@
+import os
+import struct
+import inotify.adapters
 from datetime import datetime
 from threading import Thread, currentThread
 from eventlet import websocket, green, queue, sleep, GreenPool, spawn
 from kavalkade.controllers import router
+from kavalkade.utils import inotify_watcher
 from knappe.decorators import html
 
 
 participants = set()
-clocker = None
 
 
 @router.register('/talk')
 @html('websocket')
 def gamemaster_chat(ws):
     return {}
+
+
+def get_events():
+    return 'toto'
+
+
+def check_folder(path):
+    with inotify_watcher(path) as get_events:
+        while True:
+            events = get_events()
+            if participants:
+                for event in events:
+                    parts = [event.get_mask_description()]
+                    if event.name:
+                        parts.append(event.name)
+                    msg = ' '.join(parts)
+                    for participant in participants:
+                        participant.send(f"File event: {msg}")
 
 
 def clock_every_6_sec(queue):
@@ -24,6 +45,8 @@ def clock_every_6_sec(queue):
 
 
 incoming_events = queue.Queue()
+clocker = None
+watcher = None
 
 
 def read_ws(ws):
@@ -44,9 +67,13 @@ def read_events(queue):
 
 @websocket.WebSocketWSGI
 def chat(ws):
-    global clocker
+    global clocker, watcher
+
     if clocker is None:
         clocker = spawn(clock_every_6_sec, incoming_events)
+    if watcher is None:
+        watcher = spawn(check_folder, '/tmp')
+
     participants.add(ws)
     try:
         pool = GreenPool()
