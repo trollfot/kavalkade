@@ -1,8 +1,4 @@
-import os
-import struct
-import inotify.adapters
 from datetime import datetime
-from threading import Thread, currentThread
 from eventlet import websocket, green, queue, sleep, GreenPool, spawn
 from kavalkade.controllers import router
 from kavalkade.utils import INotifyWatcher
