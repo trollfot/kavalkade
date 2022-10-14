@@ -18,10 +18,6 @@ def gamemaster_chat(ws):
     return {}
 
 
-def get_events():
-    return 'toto'
-
-
 def check_folder(*paths):
     events = INotifyWatcher(*paths).watch()
     while event := next(events):
