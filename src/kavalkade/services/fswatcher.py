@@ -3,6 +3,8 @@ import sys
 import struct
 import inotifyx
 from eventlet.green import select
+from kavalkade.app.services import Service
+from eventlet import spawn
 
 
 _EVENT_FMT = 'iIII'
@@ -45,3 +47,36 @@ class INotifyWatcher:
         finally:
             yield None
             self.fd.close()
+
+
+class FileSystemWatcher(Service):
+
+    def __init__(self, paths):
+        self.paths = paths
+        self._thread = None
+
+    @property
+    def started(self):
+        return self._thread is not None
+
+    def watch(self):
+        events = INotifyWatcher(*self.paths).watch()
+        while event := next(events):
+            if participants:
+                parts = [event.path, event.get_mask_description()]
+                if event.name:
+                    parts.append(event.name)
+                msg = ' '.join(parts)
+                for participant in participants:
+                    participant.send(f"File event: {msg}")
+
+    def start(self, buses):
+        if self.thread is not None:
+            raise RuntimeError('Greenthread already running.')
+        self._thread = spawn(self.watch)
+
+    def stop(self):
+        if self._thread is None:
+            raise RuntimeError('Greenthread is not running.')
+        self._thread.kill()
+        self._thread = None

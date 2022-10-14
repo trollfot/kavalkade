@@ -10,6 +10,7 @@ from knappe.routing import Router
 from knappe.types import Middleware
 from .ui import ui
 from .models import Models
+from .services import Services
 
 
 @dataclass
@@ -17,6 +18,7 @@ class Kavalkade(RootNode):
     database: TinyDB
     models: Models = field(default_factory=Models)
     router: Router = field(default_factory=Router)
+    services: Services = field(default_factory=Services)
     middlewares: t.Iterable[Middleware] = field(default_factory=tuple)
 
     def __post_init__(self, middlewares=()):

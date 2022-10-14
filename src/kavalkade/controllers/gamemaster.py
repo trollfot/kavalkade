@@ -1,7 +1,7 @@
 from datetime import datetime
 from eventlet import websocket, green, queue, sleep, GreenPool, spawn
 from kavalkade.controllers import router
-from kavalkade.utils import INotifyWatcher
+
 from knappe.decorators import html
 
 
@@ -12,18 +12,6 @@ participants = set()
 @html('websocket')
 def gamemaster_chat(ws):
     return {}
-
-
-def check_folder(*paths):
-    events = INotifyWatcher(*paths).watch()
-    while event := next(events):
-        if participants:
-            parts = [event.path, event.get_mask_description()]
-            if event.name:
-                parts.append(event.name)
-            msg = ' '.join(parts)
-            for participant in participants:
-                participant.send(f"File event: {msg}")
 
 
 def clock_every_6_sec(queue):
