@@ -6,6 +6,7 @@ from minicli import cli, run
 def create_web_app():
     from kavalkade.app import Kavalkade
     from kavalkade.services.clock import Clock
+    from kavalkade.services.fswatcher import FileSystemWatcher
     from kavalkade import controllers, models
     from tinydb.storages import MemoryStorage
     from tinydb import TinyDB
@@ -16,7 +17,10 @@ def create_web_app():
         models=models.models,
         router=controllers.router
     )
-    app.services.add('clock', Clock(app.websockets))
+    app.services.add(
+        'clock', Clock(app.websockets))
+    app.services.add(
+        'fswatcher', FileSystemWatcher(['/tmp'], app.websockets))
     return app
 
 
@@ -42,10 +46,9 @@ def http(debug: bool = False):
         '/chat': websocket_chat(app.websockets)
     })
 
-    listener = eventlet.listen(('', 8000))
     app.services.start()
     wsgi.server(
-        listener,
+        eventlet.listen(('', 8000)),
         root,
         log=logging.getLogger('server')
     )

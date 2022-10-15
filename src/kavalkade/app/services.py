@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod, abstractproperty
 
 logger = logging.getLogger(__name__)
 
+
 class Service(ABC):
 
     @abstractproperty

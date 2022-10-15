@@ -1,10 +1,12 @@
 import os
 import sys
 import struct
+import typing as t
 import inotifyx
-from eventlet.green import select
-from kavalkade.app.services import Service
+from pathlib import Path
 from eventlet import spawn
+from eventlet.green import select
+from . import GreenService
 
 
 _EVENT_FMT = 'iIII'
@@ -15,7 +17,7 @@ ENCODING = sys.getfilesystemencoding()
 
 class INotifyWatcher:
 
-    def __init__(self, *paths):
+    def __init__(self, *paths: Path):
         self.running = True
         self.wd_to_path = {}
         self.fd = inotifyx.init()
@@ -49,34 +51,18 @@ class INotifyWatcher:
             self.fd.close()
 
 
-class FileSystemWatcher(Service):
+class FileSystemWatcher(GreenService):
 
-    def __init__(self, paths):
+    def __init__(self, paths: t.Iterable[Path], websockets):
         self.paths = paths
-        self._thread = None
+        self.websockets = websockets
 
-    @property
-    def started(self):
-        return self._thread is not None
-
-    def watch(self):
+    def runner(self):
         events = INotifyWatcher(*self.paths).watch()
         while event := next(events):
-            if participants:
+            if self.websockets:
                 parts = [event.path, event.get_mask_description()]
                 if event.name:
                     parts.append(event.name)
                 msg = ' '.join(parts)
-                for participant in participants:
-                    participant.send(f"File event: {msg}")
-
-    def start(self, buses):
-        if self.thread is not None:
-            raise RuntimeError('Greenthread already running.')
-        self._thread = spawn(self.watch)
-
-    def stop(self):
-        if self._thread is None:
-            raise RuntimeError('Greenthread is not running.')
-        self._thread.kill()
-        self._thread = None
+                self.websockets.broadcast(f"File event: {msg}")

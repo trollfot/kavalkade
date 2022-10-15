@@ -14,7 +14,7 @@ setup(
         'orjson',
         'pydantic',
         'tinydb',
-        #'inotifyx-py3'
+        'inotifyx-py3'
     ],
     extras_require={
         'test': [
