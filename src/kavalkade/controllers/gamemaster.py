@@ -1,18 +1,19 @@
 from eventlet import websocket
 from kavalkade.controllers import router
 from knappe.decorators import html
+from kavalkade.app import Websockets
 
 
 @router.register('/talk')
 @html('websocket')
-def gamemaster_chat(ws):
+def gamemaster_chat(request):
     return {}
 
 
-def websocket_chat(registry):
+def websocket_chat(registry: Websockets):
 
     @websocket.WebSocketWSGI
-    def chat(ws):
+    def chat(ws: websocket.WebSocket):
         registry.add(ws)
         try:
             while True:

@@ -1,6 +1,7 @@
 import typing as t
 from dataclasses import dataclass, field
 from tinydb import TinyDB
+from eventlet.websocket import WebSocket
 from horseman.mapping import RootNode
 from knappe.blueprint import Blueprint
 from knappe.pipeline import Pipeline
@@ -12,13 +13,14 @@ from .ui import ui
 from .models import Models
 from .services import Services
 
-class Websockets(set):
+
+class Websockets(set[WebSocket]):
 
     def broadcast(self, message: str):
         for ws in self:
             ws.send(message)
 
-    def broadcast_from(self, origin, message):
+    def broadcast_from(self, origin: WebSocket, message: str):
         for ws in self:
             if ws is not origin:
                 ws.send(message)
