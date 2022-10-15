@@ -57,6 +57,9 @@ class FileSystemWatcher(GreenService):
         self.paths = paths
         self.websockets = websockets
 
+    def __repr__(self):
+        return f"<{self.__class__.__qualname__} for: {''.join(self.paths)}>"
+
     def runner(self):
         events = INotifyWatcher(*self.paths).watch()
         while event := next(events):

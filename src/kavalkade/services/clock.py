@@ -9,6 +9,9 @@ class Clock(GreenService):
         self.delta = delta
         self.websockets = websockets
 
+    def __repr__(self):
+        return f"<Clock every {self.delta}sec>"
+
     def runner(self):
         while True:
             if self.websockets:  # only if there's someone to listen.

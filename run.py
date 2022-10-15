@@ -3,6 +3,19 @@ from horseman.mapping import Mapping
 from minicli import cli, run
 
 
+def configure_logging(debug=False):
+    import sys
+
+    log_level = logging.DEBUG if debug else logging.WARNING
+    stream_handler = logging.StreamHandler(stream=sys.stdout)
+    stream_handler.setLevel(log_level)
+    logging.basicConfig(
+        level=log_level,
+        format='%(asctime)s %(levelname)s %(module)s %(funcName)s %(message)s',
+        handlers=[stream_handler]
+    )
+
+
 def create_web_app():
     from kavalkade.app import Kavalkade
     from kavalkade.services.clock import Clock
@@ -11,9 +24,8 @@ def create_web_app():
     from tinydb.storages import MemoryStorage
     from tinydb import TinyDB
 
-    db = TinyDB(storage=MemoryStorage)
     app = Kavalkade(
-        db,
+        TinyDB(storage=MemoryStorage),
         models=models.models,
         router=controllers.router
     )
@@ -26,28 +38,18 @@ def create_web_app():
 
 @cli
 def http(debug: bool = False):
-    import sys
-    from eventlet import wsgi
     from kavalkade.controllers.gamemaster import websocket_chat
     import eventlet
 
-    log_level = logging.DEBUG if debug else logging.WARNING
-    stream_handler = logging.StreamHandler(stream=sys.stdout)
-    stream_handler.setLevel(log_level)
-    logging.basicConfig(
-        level=log_level,
-        format='%(asctime)s %(levelname)s %(module)s %(funcName)s %(message)s',
-        handlers=[stream_handler]
-    )
-
+    configure_logging(debug)
     app = create_web_app()
+    app.services.start()
+
     root = Mapping({
         '/': app,
         '/chat': websocket_chat(app.websockets)
     })
-
-    app.services.start()
-    wsgi.server(
+    eventlet.wsgi.server(
         eventlet.listen(('', 8000)),
         root,
         log=logging.getLogger('server')
