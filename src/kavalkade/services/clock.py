@@ -1,11 +1,14 @@
 from datetime import datetime
 from kavalkade.app.services import Service
+from eventlet import spawn, sleep
 
 
 class Clock(Service):
 
-    def __init__(self, delta: int = 6):
+    def __init__(self, websockets, delta: int = 6):
         self.delta = delta
+        self.websockets = websockets
+        self._thread = None
 
     @property
     def started(self):
@@ -13,15 +16,15 @@ class Clock(Service):
 
     def clocker(self):
         while True:
-            if participants:  # only if there's someone to listen.
+            if self.websockets:  # only if there's someone to listen.
                 now = datetime.now()
-                queue.put(f"It's {now.strftime('%H:%M:%S')}")
-                sleep(6)
+                self.websockets.broadcast(f"It's {now.strftime('%H:%M:%S')}")
+            sleep(6)
 
-    def start(self, buses):
-        if self.thread is not None:
+    def start(self):
+        if self._thread is not None:
             raise RuntimeError('Greenthread already running.')
-        self._thread = spawn(self.watch)
+        self._thread = spawn(self.clocker)
 
     def stop(self):
         if self._thread is None:

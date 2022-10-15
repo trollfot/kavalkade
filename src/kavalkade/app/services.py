@@ -1,17 +1,9 @@
 import typing as t
+import logging
 from abc import ABC, abstractmethod, abstractproperty
 
 
-class Bus(ABC):
-
-    @abstractmethod
-    def put(self):
-        ...
-
-    @abstractmethod
-    def get(self):
-        ...
-
+logger = logging.getLogger(__name__)
 
 class Service(ABC):
 
@@ -20,7 +12,7 @@ class Service(ABC):
         ...
 
     @abstractmethod
-    def start(self, buses: t.Mapping[str, Bus]):
+    def start(self):
         ...
 
     @abstractmethod
@@ -31,20 +23,15 @@ class Service(ABC):
 class Services(t.Iterable[Service]):
     """Service registry
     """
-    buses: t.MutableMapping[str, Bus]
     _services: t.MutableMapping[str, Service]
     _started: bool = False
 
     def __init__(
             self,
-            services: t.Optional[t.Mapping[str, Service]] = None,
-            buses: t.Optional[t.Mapping[str, Bus]]] = None):
+            services: t.Optional[t.Mapping[str, Service]] = None):
         if services is None:
             services = {}
         self._services = services
-        if buses is None:
-            buses = {}
-        self._buses = buses
 
     def __len__(self):
         return len(self._services)
@@ -78,7 +65,6 @@ class Services(t.Iterable[Service]):
             )
         self._services[name] = service
         logger.info(f'Added new service {service!r} as {name!r}.')
-        return info
 
     def register(self, name: str):
         def service_registration(service: Service):
@@ -93,7 +79,7 @@ class Services(t.Iterable[Service]):
         if self.started:
             raise RuntimeError('Services are already started.')
         for name, service in self._services.items():
-            service.start(self.buses)
+            service.start()
         self._started = True
 
     def stop(self):

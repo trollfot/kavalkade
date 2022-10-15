@@ -5,19 +5,26 @@ from minicli import cli, run
 
 def create_web_app():
     from kavalkade.app import Kavalkade
+    from kavalkade.services.clock import Clock
     from kavalkade import controllers, models
     from tinydb.storages import MemoryStorage
     from tinydb import TinyDB
 
     db = TinyDB(storage=MemoryStorage)
-    return Kavalkade(db, models=models.models, router=controllers.router)
+    app = Kavalkade(
+        db,
+        models=models.models,
+        router=controllers.router
+    )
+    app.services.add('clock', Clock(app.websockets))
+    return app
 
 
 @cli
 def http(debug: bool = False):
     import sys
     from eventlet import wsgi
-    from kavalkade.controllers.gamemaster import chat
+    from kavalkade.controllers.gamemaster import websocket_chat
     import eventlet
 
     log_level = logging.DEBUG if debug else logging.WARNING
@@ -29,13 +36,16 @@ def http(debug: bool = False):
         handlers=[stream_handler]
     )
 
+    app = create_web_app()
     root = Mapping({
-        '/': create_web_app(),
-        '/chat': chat
+        '/': app,
+        '/chat': websocket_chat(app.websockets)
     })
 
+    listener = eventlet.listen(('', 8000))
+    app.services.start()
     wsgi.server(
-        eventlet.listen(('', 8000)),
+        listener,
         root,
         log=logging.getLogger('server')
     )

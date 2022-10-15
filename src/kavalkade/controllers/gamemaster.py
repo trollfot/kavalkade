@@ -1,11 +1,6 @@
-from datetime import datetime
-from eventlet import websocket, green, queue, sleep, GreenPool, spawn
+from eventlet import websocket
 from kavalkade.controllers import router
-
 from knappe.decorators import html
-
-
-participants = set()
 
 
 @router.register('/talk')
@@ -14,51 +9,18 @@ def gamemaster_chat(ws):
     return {}
 
 
-def clock_every_6_sec(queue):
-    while True:
-        if participants:  # only if there's someone to listen.
-            now = datetime.now()
-            queue.put(f"It's {now.strftime('%H:%M:%S')}")
-            sleep(6)
+def websocket_chat(registry):
 
+    @websocket.WebSocketWSGI
+    def chat(ws):
+        registry.add(ws)
+        try:
+            while True:
+                m = ws.wait()
+                if m is None:
+                    break
+                registry.broadcast(m)
+        finally:
+            registry.remove(ws)
 
-incoming_events = queue.Queue()
-clocker = None
-watcher = None
-
-
-def read_ws(ws):
-    while True:
-        m = ws.wait()
-        if m is None:
-            break
-        for p in participants:
-            p.send(m)
-
-
-def read_events(queue):
-    while True:
-        m = incoming_events.get()
-        for p in participants:
-            p.send(m)
-
-
-@websocket.WebSocketWSGI
-def chat(ws):
-    global clocker, watcher
-
-    if clocker is None:
-        clocker = spawn(clock_every_6_sec, incoming_events)
-    if watcher is None:
-        watcher = spawn(check_folder, '/tmp')
-
-    participants.add(ws)
-    try:
-        pool = GreenPool()
-        ws_reader = pool.spawn(read_ws, ws)
-        iq_reader = pool.spawn(read_events, incoming_events)
-        ws_reader.wait()
-    finally:
-        ws_reader.kill()
-        iq_reader.kill()
-        participants.remove(ws)
+    return chat

@@ -12,10 +12,22 @@ from .ui import ui
 from .models import Models
 from .services import Services
 
+class Websockets(set):
+
+    def broadcast(self, message: str):
+        for ws in self:
+            ws.send(message)
+
+    def broadcast_from(self, origin, message):
+        for ws in self:
+            if ws is not origin:
+                ws.send(message)
+
 
 @dataclass
 class Kavalkade(RootNode):
     database: TinyDB
+    websockets: Websockets = field(default_factory=Websockets)
     models: Models = field(default_factory=Models)
     router: Router = field(default_factory=Router)
     services: Services = field(default_factory=Services)
@@ -33,6 +45,6 @@ class Kavalkade(RootNode):
                 environ,
                 app=self,
                 endpoint=endpoint,
-                context={"ui" : ui}
+                context={"ui": ui}
             )
         )
