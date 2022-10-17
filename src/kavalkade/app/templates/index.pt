@@ -3,3 +3,5 @@
 <li>Jambon</li>
 <li>Beurre</li>
 </ul>
+
+${request.app.websockets}

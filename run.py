@@ -1,6 +1,5 @@
-import logging
-from horseman.mapping import Mapping
 from minicli import cli, run
+import logging
 
 
 def configure_logging(debug=False):
@@ -18,43 +17,41 @@ def configure_logging(debug=False):
 
 def create_web_app():
     from kavalkade.app import Kavalkade
-    from kavalkade.services.clock import Clock
-    from kavalkade.services.fswatcher import FileSystemWatcher
     from kavalkade import controllers, models
     from tinydb.storages import MemoryStorage
     from tinydb import TinyDB
 
+    db = TinyDB(storage=MemoryStorage)
     app = Kavalkade(
         TinyDB(storage=MemoryStorage),
         models=models.models,
-        router=controllers.router
+        router=controllers.router,
+        websockets=controllers.websockets,
     )
-    app.services.add(
-        'clock', Clock(app.websockets))
-    app.services.add(
-        'fswatcher', FileSystemWatcher(['/tmp'], app.websockets))
     return app
 
 
 @cli
 def http(debug: bool = False):
-    from kavalkade.controllers.gamemaster import websocket_chat
-    import eventlet
+
+    import sys
+    import asyncio
+    from aiowsgi import create_server
+    from kavalkade.services.fswatcher import fswatcher
+    from kavalkade.services.clock import clock
 
     configure_logging(debug)
     app = create_web_app()
+
+    loop = asyncio.new_event_loop()
+    app.services.bind(loop)
+    app.services.add('clock', clock(app, 3))
+    app.services.add('file_watcher', fswatcher(app, '/tmp'))
+    app.services.add('websockets', app.websockets.serve())
     app.services.start()
 
-    root = Mapping({
-        '/': app,
-        '/chat': websocket_chat(app.websockets)
-    })
-    eventlet.wsgi.server(
-        eventlet.listen(('', 8000)),
-        root,
-        log=logging.getLogger('server')
-    )
-
+    srv = create_server(app, loop=loop, port=8000)
+    srv.run()
 
 if __name__ == '__main__':
     run()

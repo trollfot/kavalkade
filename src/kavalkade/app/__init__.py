@@ -1,9 +1,11 @@
+import asyncio
 import typing as t
+import websockets
+from autoroutes import Routes
 from dataclasses import dataclass, field
 from tinydb import TinyDB
 from eventlet.websocket import WebSocket
 from horseman.mapping import RootNode
-from knappe.blueprint import Blueprint
 from knappe.pipeline import Pipeline
 from knappe.request import RoutingRequest as Request
 from knappe.response import Response
@@ -14,16 +16,53 @@ from .models import Models
 from .services import Services
 
 
-class Websockets(set[WebSocket]):
+WebsocketHandler = t.Callable[..., t.Coroutine[t.Any, t.Any, t.Any]]
 
-    def broadcast(self, message: str):
-        for ws in self:
-            ws.send(message)
 
-    def broadcast_from(self, origin: WebSocket, message: str):
-        for ws in self:
+class Websockets:
+
+    def __init__(self, handlers: t.Optional[Routes] = None):
+        if handlers is None:
+            handlers = Routes()
+        self.handlers = handlers
+        self.connected = set()
+        self.app = None
+
+    def bind(self, app):
+        self.app = app
+
+    async def broadcast(self, message: str):
+        for ws in self.connected:
+            await ws.send(message)
+
+    async def broadcast_from(self, origin, message):
+        for ws in self.connected:
             if ws is not origin:
-                ws.send(message)
+                await ws.send(message)
+
+    def register(self, path):
+        def register_handler(coro: WebsocketHandler):
+            print('I register path for ', coro)
+            self.handlers.add(path, handler=coro)
+            return coro
+        return register_handler
+
+    async def handler(self, ws):
+        payload, params = self.handlers.match(ws.path)
+        if not payload:
+            raise RuntimeError('Could not find a ws handler.')
+        handler: WebsocketHandler = payload['handler']
+        try:
+            self.connected.add(ws)
+            await handler(self.app, ws, **params)
+        except websockets.exceptions.ConnectionClosedOK:
+            pass
+        finally:
+            self.connected.remove(ws)
+
+    async def serve(self, port: int = 8001):
+        async with websockets.serve(self.handler, "", port):
+            await asyncio.Future()  # run forever
 
 
 @dataclass
@@ -39,6 +78,7 @@ class Kavalkade(RootNode):
         self.pipeline: Pipeline[Request, Response] = Pipeline(
             self.middlewares
         )
+        self.websockets.bind(self)
 
     def resolve(self, path, environ):
         endpoint = self.router.match_method(path, environ['REQUEST_METHOD'])
