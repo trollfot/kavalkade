@@ -36,7 +36,7 @@ def http(debug: bool = False):
     import asyncio
     from aiowsgi import create_server
     from kavalkade.services.fswatcher import fswatcher
-    from kavalkade.services.clock import clock
+    from kavalkade.services.clock import clock, services_status
 
     configure_logging(debug)
 
@@ -44,6 +44,7 @@ def http(debug: bool = False):
     loop = asyncio.new_event_loop()
     app.services.bind(loop)
     app.services.add('clock', clock(app, 3))
+    app.services.add('statuses', services_status(app, 10))
     app.services.add('file_watcher', fswatcher(app, '/tmp'))
     app.services.add('websockets', app.websockets.serve())
     wsgi_server = create_server(app, loop=loop, port=8000)

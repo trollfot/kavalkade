@@ -9,13 +9,34 @@ logger = logging.getLogger(__name__)
 
 
 class Service:
+    __slots__ = ('name', 'coro', 'task')
+
     name: str
     coro: t.Callable[[], t.Coroutine[None, None, None]]
-    task: t.Optional[asyncio.Task] = None
+    task: t.Optional[asyncio.Task]
 
     def __init__(self, name, coro):
         self.name = name
         self.coro = coro
+        self.task = None
+
+    @property
+    def started(self):
+        return self.task is not None
+
+    @property
+    def status(self):
+        try:
+            result = self.task.result()
+        except asyncio.CancelledError:
+            # the task has been cancelled
+            return 'Cancelled'
+        except Exception as exc:
+            if isinstance(exc, asyncio.exceptions.InvalidStateError):
+                return 'Running'
+            return 'RuntimeError'
+        return 'Unknown state'
+
 
 
 class Services:
@@ -70,11 +91,20 @@ class Services:
     def __iter__(self):
         return iter(self._services.values())
 
+    def _service_callback(self, task: asyncio.Task) -> None:
+        try:
+            task.result()
+        except asyncio.CancelledError:
+            pass  # Task cancellation should not be logged as an error.
+        except Exception:  # pylint: disable=broad-except
+            logger.exception('Exception raised by task = %r', task)
+
     def start(self):
         if self._started:
             raise RuntimeError('Services are already started.')
         for name, service in self._services.items():
             service.task = self.loop.create_task(service.coro)
+            service.task.add_done_callback(self._service_callback)
         self._started = True
 
     async def stop(self):
