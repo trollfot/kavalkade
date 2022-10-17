@@ -8,4 +8,4 @@ class Index(metaclass=HTTPMethodEndpointMeta):
 
     @html('index')
     def GET(self, request):
-        return {}
+        return {'request': request}
