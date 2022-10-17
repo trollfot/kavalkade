@@ -14,6 +14,7 @@ setup(
         'orjson',
         'pydantic',
         'tinydb',
+        'aiowsgi',
     ],
     extras_require={
         'test': [

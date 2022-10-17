@@ -2,29 +2,8 @@ from minicli import cli, run
 import logging
 
 
-def create_web_app(**common):
-    from kavalkade.app import Kavalkade
-    from kavalkade import controllers, models
-    from tinydb.storages import MemoryStorage
-    from tinydb import TinyDB
-
-    db = TinyDB(storage=MemoryStorage)
-    app = Kavalkade(
-        db,
-        models=models.models,
-        router=controllers.router,
-        websockets=controllers.websockets,
-    )
-    return app
-
-
-@cli
-def http(debug: bool = False):
+def configure_logging(debug=False):
     import sys
-    import asyncio
-    from aiowsgi import create_server
-    from kavalkade.services.fswatcher import fswatcher
-    from kavalkade.services.clock import clock
 
     log_level = logging.DEBUG if debug else logging.WARNING
     stream_handler = logging.StreamHandler(stream=sys.stdout)
@@ -35,6 +14,33 @@ def http(debug: bool = False):
         handlers=[stream_handler]
     )
 
+
+def create_web_app():
+    from kavalkade.app import Kavalkade
+    from kavalkade import controllers, models
+    from tinydb.storages import MemoryStorage
+    from tinydb import TinyDB
+
+    db = TinyDB(storage=MemoryStorage)
+    app = Kavalkade(
+        TinyDB(storage=MemoryStorage),
+        models=models.models,
+        router=controllers.router,
+        websockets=controllers.websockets,
+    )
+    return app
+
+
+@cli
+def http(debug: bool = False):
+
+    import sys
+    import asyncio
+    from aiowsgi import create_server
+    from kavalkade.services.fswatcher import fswatcher
+    from kavalkade.services.clock import clock
+
+    configure_logging(debug)
     app = create_web_app()
 
     loop = asyncio.new_event_loop()

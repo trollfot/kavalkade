@@ -4,6 +4,7 @@ import websockets
 from autoroutes import Routes
 from dataclasses import dataclass, field
 from tinydb import TinyDB
+from eventlet.websocket import WebSocket
 from horseman.mapping import RootNode
 from knappe.pipeline import Pipeline
 from knappe.request import RoutingRequest as Request
