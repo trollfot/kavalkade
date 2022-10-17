@@ -7,14 +7,13 @@ setup(
         'colander',
         'deform',
         'discord.py[voice]',
-        'eventlet',
         'horseman',
+        'inotipy',
         'knappe',
         'knappe_deform',
         'orjson',
         'pydantic',
         'tinydb',
-        #'inotifyx-py3'
     ],
     extras_require={
         'test': [
