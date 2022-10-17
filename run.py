@@ -51,7 +51,13 @@ def http(debug: bool = False):
     app.services.start()
 
     srv = create_server(app, loop=loop, port=8000)
-    srv.run()
+    try:
+        srv.run()
+    except:
+        loop.run_until_complete(app.services.stop())
+    finally:
+        loop.stop()
+
 
 if __name__ == '__main__':
     run()
