@@ -2,5 +2,4 @@
 -e git+https://git@github.com/HorsemanWSGI/knappe.git#egg=knappe
 -e git+https://git@github.com/HorsemanWSGI/knappe_deform.git#egg=knappe_deform
 -e .[test]
-eventlet
 minicli
