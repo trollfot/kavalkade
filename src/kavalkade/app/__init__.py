@@ -31,6 +31,9 @@ class Websockets:
     def bind(self, app):
         self.app = app
 
+    def sync_broadcast(self, message: str):
+        self.app.services.loop.create_task(self.broadcast(message))
+
     async def broadcast(self, message: str):
         for ws in self.connected:
             await ws.send(message)
