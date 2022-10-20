@@ -38,7 +38,6 @@ class Service:
         return 'Unknown state'
 
 
-
 class Services:
 
     _started: bool = False

@@ -34,11 +34,26 @@ def create_web_app():
 @cli
 def http(debug: bool = False):
     import asyncio
+    import aioftp
+    import pathlib
     from aiowsgi import create_server
     from kavalkade.services.fswatcher import fswatcher
     from kavalkade.services.clock import clock, services_status
 
     configure_logging(debug)
+
+    root = pathlib.Path(__file__).parent / 'ftproot'
+    users = [
+        aioftp.User(
+            "test",
+            "test",
+            home_path='/ftproot/test',
+            permissions=(
+                aioftp.Permission("/", readable=False, writable=False),
+                aioftp.Permission('/ftproot/test', readable=True, writable=True),
+            )
+        )
+    ]
 
     app = create_web_app()
     loop = asyncio.new_event_loop()
@@ -47,6 +62,7 @@ def http(debug: bool = False):
     app.services.add('statuses', services_status(app, 10))
     app.services.add('file_watcher', fswatcher(app, '/tmp'))
     app.services.add('websockets', app.websockets.serve())
+    app.services.add('ftp', aioftp.Server(users=users).start(port=8021))
     wsgi_server = create_server(app, loop=loop, port=8000)
 
     try:
